@@ -50,6 +50,13 @@ class Block {
         timestamp:number
     ): string => CryptoJS.SHA256(index + previousHash + data + timestamp).toString()
 
+    static validateStructure = (aBlock: Block): boolean => {
+        return (typeof aBlock.index === 'number' && 
+        typeof aBlock.hash === 'string' && 
+        typeof aBlock.previousHash === 'string' &&
+        typeof aBlock.timestamp === 'number' &&
+        typeof aBlock.data === 'string')
+    }
     constructor(
         index: number,
         hash: string,
@@ -82,19 +89,51 @@ const createNewBlock = (data: string): Block => {
     const newIndex: number = previousBlock.index + 1
     const newTimestamp: number = getNewTimestamp()
     const newHash: string = Block.calculateBlockHash(newIndex, previousBlock.hash, data, newTimestamp)
+    
+    const newBlock = new Block(newIndex, newHash, previousBlock.hash, data, newTimestamp)
+    addBlock(newBlock)
 
-    return new Block(newIndex, newHash, previousBlock.hash, data, newTimestamp)
+    return newBlock
 }
 
-const appendBlockchain = (): void => {
-    const newBlock: Block = createNewBlock('hello')
-    console.log(newBlock)
-    blockchain.push(newBlock)
+// const appendBlockchain = (): void => {
+//     const newBlock: Block = createNewBlock('hello')
+//     console.log(newBlock)
+//     blockchain.push(newBlock)
+// }
+
+// appendBlockchain()
+// appendBlockchain()
+// appendBlockchain()
+
+const getHashOfABlock = (aBlock: Block): string => Block.calculateBlockHash(
+    aBlock.index, aBlock.previousHash, aBlock.data, aBlock.timestamp
+)
+
+const isBlockValid =  (candidateBlock: Block, previousBlock: Block): boolean => {
+    if (!Block.validateStructure(candidateBlock)) {
+        return false
+    } else if (previousBlock.index + 1 !== candidateBlock.index) {
+        return false
+    } else if (previousBlock.hash !== candidateBlock.previousHash) {
+        return false
+    } else if (getHashOfABlock(candidateBlock) !== candidateBlock.hash) {
+        return false
+    } else {
+        return true
+    }
 }
 
-appendBlockchain()
-appendBlockchain()
-appendBlockchain()
+const addBlock = (candidateBlock: Block): void => {
+    if (isBlockValid(candidateBlock, getLastBlock())) {
+        blockchain.push(candidateBlock)
+    }
+}
 
+createNewBlock('second')
+createNewBlock('third')
+createNewBlock('4th')
+
+console.log(blockchain)
 
 export {}
